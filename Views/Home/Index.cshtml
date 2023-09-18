@@ -1,0 +1,321 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Employee Product</title>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+
+
+    <script>
+
+        /*                                                           Getting All Customers And Product Details Into DataTable
+            ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+        $(document).ready(function () {
+            GetAll();
+        });
+        function GetAll() {
+            $.ajax({
+                url: 'https://localhost:44344/CustomerProduct/GetCustomerAndProducts',
+                type: 'Get',
+                dataType: 'json',
+                success: OnSuccess
+            });
+        };
+        function OnSuccess(response) {
+            $('#datatable').DataTable({
+                bProcessing: true,
+                bLengthChange: true,
+                lengthMenu: [[5, 10, 25], [5, 10, 25, "All"]],
+                bfilter: true,
+                bSort: true,
+                bPaginate: true,
+                bDestroy: true,
+                data: response,
+                columns: [
+                    {
+                        data: 'ProductName',
+                        render: function (data, type, row, meta) {
+                            return row.productName
+                        }
+                    },
+                    {
+                        data: 'CustomerName',
+                        render: function (data, type, row, meta) {
+                            return row.customerName
+                        }
+                    },
+                    {
+                        data: 'SaleDate',
+                        render: function (data, type, row, meta) {
+                            return row.saleDate
+                        }
+                    },
+                    {
+                        data: 'ProductPrice',
+                        render: function (data, type, row, meta) {
+                            return row.productPrice
+                        }
+                    },
+                ]
+            });
+        };
+
+
+        /*                                                           Getting All Customers And Product Details Into DataTable
+            ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+        function SaveBtnClick() {
+            var customerId = $("#CustomerId").val();
+            var customerName = $("#CustomerName").val();
+            var genderId = $("#GenderId").val();
+            var contactNumber = $("#ContactNumber").val();
+            var productId = $("#ProductId").val();
+            var productName = $("#ProductName").val();
+            var productPrice = $("#ProductPrice").val();
+            if ((customerId.length != "") && (customerName.length != "") && (genderId != "") && (contactNumber != "") && (productId != "") && (productName != "") && (productPrice != "")) {
+                var customerProductDetails = {
+                    CustomerId: customerId,
+                    CustomerName: customerName,
+                    GenderId: genderId,
+                    ContactNumber: contactNumber,
+                    ProductId: productId,
+                    ProductName: productName,
+                    ProductPrice: productPrice
+                }
+                SumbitForm(customerProductDetails);
+            }
+            else {
+                alert("Plece Provide All Details");
+            }
+        }
+
+        function SumbitForm(customerProductDetails) {
+            $.ajax({
+                url: 'https://localhost:44344/CustomerProduct/Post',
+                method: 'Post',
+                data: customerProductDetails,
+                success: function () {
+                    alert("Data Saved Successfully");
+                    $("#form1").trigger('reset');
+                },
+                error: function (err) {
+                    alert(err.Message);
+                }
+            })
+        }
+
+
+        /*                                                          Setting Customers And Product Details Into Form 2 Fields
+            ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+        var count = 0;
+        $(document).ready(function () {
+            $("#CustId").keyup(function (e) {
+                if ((e.keyCode >= 65 && e.keyCode <= 90) || (e.keyCode >= 97 && e.keyCode <= 122) || (e.keyCode >= 48 && e.keyCode <= 57)) {
+                    count++;
+                }
+                else if (e.keyCode == 8 || e.keyCode == '8') {
+                    if ($("#CustId").val().length > -1) {
+                        --count;
+                    }
+                }
+                if (count == 6) {
+                    var customerId = $("#CustId").val();
+                    $.ajax({
+                        url: 'https://localhost:44344/CustomerProduct/GetCustomer/',
+                        type: 'Get',
+                        data: { 'customerId': customerId },
+                        contentType: 'application/json; charset=utf-8',
+                        dataType: 'json',
+                        success: function (data) {
+                            $("#PId").val(data.pId);
+                            $("#CustName").val(data.customerName);
+                            $("#ProName").val(data.productName);
+                            $("#ProPrice").val(data.productPrice);
+                        },
+                        error: function (err) {
+                            alert(err.Message);
+                        }
+                    });
+                }
+            });
+        });
+
+
+        /*                                                                      Updating Sale Date
+        --------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+        function UpdateButtonClick() {
+
+            var pId = $("#PId").val();
+            var saleDate = $("#SaleDate").val();
+            if (saleDate != "") {
+                var obj = {
+                    PId: pId,
+                    SaleDate: saleDate
+                }
+                SubmitSaleDate(obj);
+                count = 0;
+            }
+            else {
+                alert("Plese Select Sale Date");
+            }
+        }
+        function SubmitSaleDate(obj) {
+            $.ajax({
+                url: 'https://localhost:44344/CustomerProduct/Put',
+                method: 'Put',
+                data: obj,
+                success: function () {
+                    alert("Sale Date Updated");
+                    GetAll();
+                    $("#form2").trigger('reset');
+                },
+                error: function (err) {
+                    alert(err.Message);
+                }
+            })
+        }
+
+
+        /*                                                          Mobile Number Validation
+        ----------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+
+        $(document).ready(function () {
+            $("#ContactNumber").keyup(function (e) {
+                const ph = document.querySelector("#ContactNumber");
+                const phexp = /^[6789]\d{9}$/;
+                if (phexp.test(ph.value) == false) {
+                    ph.style.border = "2px solid red";
+                    $("#form1").preventDefault;
+                } else {
+                    //fn.all=unset;
+                    ph.style.border = "1px solid";
+                }
+            })
+        })
+
+        $(document).ready(function () {
+            $("#CustId").keyup(function () {
+                var Count = $("#CustId").val().length;
+                if (Count < 6) {
+                    $("#PId").val("");
+                    $("#CustName").val("");
+                    $("#ProName").val("");
+                    $("#ProPrice").val("");
+                }
+            })
+        })
+
+
+
+
+    </script>
+</head>
+<body>
+    @*                                  Form No1 for getteing data from Customer
+    ------------------------------------------------------------------------------------------------------------------------------------------------*@
+    <div class="col-6 container mt-3">
+        <form id="form1">
+            <table cellpadding="3" cellspacing="3">
+                <tr>
+                    <td><strong>Enter Customer Id: </strong></td>
+                    <td><input type="text" id="CustomerId" class="form-control" placeholder="eg: abc123" required maxlength="6" /></td>
+                </tr>
+                <tr>
+                    <td><strong>Enter Customer Name: </strong></td>
+                    <td><input type="text" required id="CustomerName" class="form-control" /></td>
+                </tr>
+                <tr>
+                    <td><strong>Select Gender: </strong></td>
+                    <td>
+                        <select id="GenderId">
+                            <option selected class="form-control form-select-sm">-Select Gender-</option>
+                            <option value="1">Male</option>
+                            <option value="2">Female</option>
+                            <option value="3">Others</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Enter Contact Number: </strong></td>
+                    <td><input type="text" id="ContactNumber" class="form-control" required maxlength="10" onkeypress="return /[0-9]/i.test(event.key)" /></td>
+                </tr>
+                <tr>
+                    <td><strong>Enter Product Id: </strong></td>
+                    <td><input type="text" id="ProductId" class="form-control" required placeholder="eg: abc123" maxlength="6" /></td>
+                </tr>
+                <tr>
+                    <td><strong>Enter Product Name: </strong></td>
+                    <td><input type="text" id="ProductName" required class="form-control" /></td>
+                </tr>
+                <tr>
+                    <td><strong>Enter Product Price: </strong></td>
+                    <td><input type="text" id="ProductPrice" required class="form-control" /></td>
+                </tr>
+            </table>
+        </form>
+    </div>
+
+    <div class="container col-3 mb-5 mt-2 ">
+        <button class="btn btn-outline-success" onclick="SaveBtnClick()"> Save Order Details </button>
+    </div>
+
+
+    @*                                  Form No.2 Showing Customer details and updating sale date
+    --------------------------------------------------------------------------------------------------------------------------------------------------*@
+    <div class="container col-6 mb-1">
+        <form id="form2">
+            <table cellpadding="3">
+                <tr>
+                    <td colspan="2"><input type="hidden" id="PId" /></td>
+                </tr>
+                <tr>
+                    <td><strong>Enter Customer Id: </strong></td>
+                    <td><input type="text" id="CustId" class="form-control" placeholder="eg: abc123" maxlength="6" /></td>
+                </tr>
+                <tr>
+                    <td><strong>Customer Name: </strong></td>
+                    <td><input type="text" id="CustName" readonly class="form-control" /></td>
+                </tr>
+                <tr>
+                    <td><strong>Product Name: </strong></td>
+                    <td><input type="text" id="ProName" readonly class="form-control" /></td>
+                </tr>
+                <tr>
+                    <td><strong>Product Price: </strong></td>
+                    <td><input type="text" id="ProPrice" readonly class="form-control" /></td>
+                </tr>
+                <tr>
+                    <td><strong>Select Sale Date: </strong></td>
+                    <td><input type="datetime-local" id="SaleDate" required class="form-control" /></td>
+                </tr>
+            </table>
+        </form>
+    </div>
+
+    <div class="container col-3 mb-5 mt-2 ">
+        <button onclick="UpdateButtonClick()" id="UpdateButton" class="btn btn-outline-info"> Update Order Details </button>
+    </div>
+
+
+
+
+    <div class="col-8 container">
+        <table align="center" id="datatable" class="table-success" border="3">
+            <thead>
+                <tr>
+                    <th>Product Name</th>
+                    <th>Customer Name</th>
+                    <th>Sale Date</th>
+                    <th>Product Price</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <br />
+    </div>
+</body>
+</html>
